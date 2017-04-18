@@ -1,4 +1,4 @@
-package poloniex
+package polo
 
 type CandleStick struct {
 	Date            PoloniexDate `json:"date"`
