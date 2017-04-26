@@ -36,6 +36,10 @@ type OrderBook struct {
 	IsFrozen int             `json:"isFrozen,string"`
 	Error    string          `json:"error"`
 }
+type OrderBookAll struct {
+	Pair map[string]OrderBook
+	Error string
+}
 
 // GetTickers is used to get the ticker for all markets
 func (b *Poloniex) GetTickers() (tickers map[string]Ticker, err error) {
@@ -76,7 +80,7 @@ func (b *Poloniex) GetCurrencies() (currencies Currencies, err error) {
 // market: a string literal for the market (ex: BTC_NXT). 'all' not implemented.
 // cat: bid, ask or both to identify the type of orderbook to return.
 // depth: how deep of an order book to retrieve
-func (b *Poloniex) GetOrderBook(market, cat string, depth int) (orderBook OrderBook, err error) {
+func (b *Poloniex) GetOrderBook(market, cat string, depth int) (orderBook map[string]OrderBook, err error) {
 	// not implemented
 	if cat != "bid" && cat != "ask" && cat != "both" {
 		cat = "both"
@@ -95,10 +99,10 @@ func (b *Poloniex) GetOrderBook(market, cat string, depth int) (orderBook OrderB
 	if err = json.Unmarshal(r, &orderBook); err != nil {
 		return
 	}
-	if orderBook.Error != "" {
+	/*if orderBook.Error != "" {
 		err = errors.New(orderBook.Error)
 		return
-	}
+	}*/
 	return
 }
 

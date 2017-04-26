@@ -70,8 +70,25 @@ func main() {
 
 	// Get orders book
 
-		orderBook, err := poloniex.GetOrderBook("BTC_DASH", "bid", 100)
-		fmt.Println(err, orderBook)
+		orderBook, err := poloniex.GetOrderBook("all", "bid", 10)
+		fmt.Println(err)
+	for key,v := range orderBook {
+		fmt.Println(key, v)
+		for _, ask := range v.Asks{
+			AskAmount:=ask[1]
+			AskPrice:=ask[0]
+			fmt.Println("AskAmount=", AskAmount)
+			fmt.Println("AskPrice=", AskPrice)
+		}
+		for _, bids := range v.Bids{
+			BidsAmount:=bids[1]
+			BidsPrice:=bids[0]
+			fmt.Println("BidsAmount=", BidsAmount)
+			fmt.Println("BidsPrice=", BidsPrice)
+		}
+	}
+
+
 
 
 	// Market history
