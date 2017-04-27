@@ -3,12 +3,20 @@ package main
 import (
 	"fmt"
 	"poloniex/polo"
+	"strconv"
+	"os"
 )
 
 const (
 	API_KEY    = ""
 	API_SECRET = ""
 )
+type Start struct {
+	AskAmount float64
+	AskPrice float64
+
+
+}
 
 func main() {
 	// Poloniex client
@@ -69,23 +77,51 @@ func main() {
 	*/
 
 	// Get orders book
-
-		orderBook, err := poloniex.GetOrderBook("all", "bid", 10)
-		fmt.Println(err)
+	//Создание файла
+	file, err := os.Create("poloniex.txt")
+	if err != nil {
+		fmt.Println("Не удалось создать файл poloniex.txt")
+		return
+	}
+	defer file.Close()
+		orderBook, err := poloniex.GetOrderBook("all",10)
+		if err != nil {
+			fmt.Println("JSON error", err)
+		}
 	for key,v := range orderBook {
 		fmt.Println(key, v)
+		AskAvg:= 0.0
+		AskAmount:= 0.0
 		for _, ask := range v.Asks{
-			AskAmount:=ask[1]
-			AskPrice:=ask[0]
-			fmt.Println("AskAmount=", AskAmount)
-			fmt.Println("AskPrice=", AskPrice)
+
+			a,_:=strconv.ParseFloat(ask[0].(string),10)//convert interface string to float
+			AskAmount = AskAmount + ask[1].(float64)
+			AskAvg = AskAvg + a
 		}
+		//fmt.Println("AskAmount=", AskAmount)
+		AskAmount1:= strconv.FormatFloat(AskAmount, 'f', 8, 64)
+		AskPrice:=strconv.FormatFloat(AskAvg/10, 'f', 8, 64)
+		//fmt.Println("AskPrice=", AskAvg/10)
+		BidsAvg:= 0.0
+		BidsAmount:= 0.0
 		for _, bids := range v.Bids{
-			BidsAmount:=bids[1]
-			BidsPrice:=bids[0]
-			fmt.Println("BidsAmount=", BidsAmount)
-			fmt.Println("BidsPrice=", BidsPrice)
+			b,_:=strconv.ParseFloat(bids[0].(string), 10)
+			BidsAmount = BidsAmount + bids[1].(float64)
+			BidsAvg = BidsAvg + b
 		}
+		//fmt.Println("BidsAmount=", BidsAmount)
+		BidsAmount1:= strconv.FormatFloat(BidsAmount, 'f', 8, 64)//conv float to str after "." - 6 symbol
+		BidsPrice:= strconv.FormatFloat(BidsAvg/10, 'f', 8, 64)
+		//fmt.Println("BidsPrice=", BidsAvg/10)
+		//открытие файла и доваление записи
+		f, err := os.OpenFile("poloniex.txt", os.O_APPEND|os.O_WRONLY, 0600)
+		if err != nil{
+			fmt.Println("Не удалось открыть файл poloniex.txt")
+		}
+		if _, err = f.WriteString(key + "\t" +"\t"+ "AskAmount="+ AskAmount1+"\t"+"\t"+"AskPrice="+AskPrice+"\t"+"\t"+"BidsAmount="+BidsAmount1+"\t"+"\t"+"BidsPrice="+BidsPrice+"\n"); err != nil {
+			fmt.Println("Не удалось записать строку в файл", err)
+		}
+		f.Close()
 	}
 
 

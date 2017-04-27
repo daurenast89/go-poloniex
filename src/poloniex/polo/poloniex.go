@@ -80,11 +80,9 @@ func (b *Poloniex) GetCurrencies() (currencies Currencies, err error) {
 // market: a string literal for the market (ex: BTC_NXT). 'all' not implemented.
 // cat: bid, ask or both to identify the type of orderbook to return.
 // depth: how deep of an order book to retrieve
-func (b *Poloniex) GetOrderBook(market, cat string, depth int) (orderBook map[string]OrderBook, err error) {
+func (b *Poloniex) GetOrderBook(market string, depth int) (orderBook map[string]OrderBook, err error) {
 	// not implemented
-	if cat != "bid" && cat != "ask" && cat != "both" {
-		cat = "both"
-	}
+
 	if depth > 100 {
 		depth = 100
 	}
