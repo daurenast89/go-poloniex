@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"poloniex/polo"
-	"strconv"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -12,7 +14,6 @@ const (
 	API_KEY    = ""
 	API_SECRET = ""
 )
-
 
 //Структура для хранения значений пар
 //AskAmount-объем спроса
@@ -25,6 +26,7 @@ type Start struct {
 	BidsAmount float64
 	BidsPrice  float64
 }
+
 func main() {
 	poloniex := poloniex.New(API_KEY, API_SECRET)
 	// Get orders book
@@ -41,10 +43,13 @@ func main() {
 	for key, v := range orderBook {
 		AskAvg0 := 0.0
 		AskAmount0 := 0.0
-		ak:=0.0
+		ak := 0.0
 		for _, ask := range v.Asks {
 
-			a, _ := strconv.ParseFloat(ask[0].(string), 10) //convert interface string to float
+			a, err := strconv.ParseFloat(ask[0].(string), 10) //convert interface string to float
+			if err != nil {
+				fmt.Println("don't convert format", err)
+			}
 			AskAmount0 = AskAmount0 + ask[1].(float64)
 			AskAvg0 = AskAvg0 + a
 			ak = ak + 1
@@ -52,11 +57,12 @@ func main() {
 		AskAvg0 = AskAvg0 / ak
 		BidsAvg0 := 0.0
 		BidsAmount0 := 0.0
-		bk:=0.0
+		bk := 0.0
 		for _, bids := range v.Bids {
-			b, _ := strconv.ParseFloat(bids[0].(string), 10)//convert interface string to float
+			b, _ := strconv.ParseFloat(bids[0].(string), 10) //convert interface string to float
 			BidsAmount0 = BidsAmount0 + bids[1].(float64)
 			BidsAvg0 = BidsAvg0 + b
+			bk = bk + 1
 		}
 		BidsAvg0 = BidsAvg0 / bk
 		//формирование карты начального значения StartOrderBook
@@ -81,21 +87,23 @@ func main() {
 		for key, v := range orderBookCurrent {
 			AskAvg := 0.0
 			AskAmount := 0.0
-			ak:=0.0
+			ak := 0.0
 			for _, ask := range v.Asks {
 
 				a, _ := strconv.ParseFloat(ask[0].(string), 10) //convert interface string to float
 				AskAmount = AskAmount + ask[1].(float64)
 				AskAvg = AskAvg + a
+				ak = ak + 1
 			}
 			AskAvg = AskAvg / ak
 			BidsAvg := 0.0
 			BidsAmount := 0.0
-			bk:= 0.0
+			bk := 0.0
 			for _, bids := range v.Bids {
 				b, _ := strconv.ParseFloat(bids[0].(string), 10)
 				BidsAmount = BidsAmount + bids[1].(float64)
 				BidsAvg = BidsAvg + b
+				bk = bk + 1
 			}
 			BidsAvg = BidsAvg / bk
 			if _, ok := StartOrderBook[key]; ok {
@@ -105,11 +113,12 @@ func main() {
 				BidsPricePercent := (BidsAvg/StartOrderBook[key].BidsPrice - 1) * 100
 
 				CurrentOrderBook[key] = Start{AskAmount: AskAmountPercent,
-								AskPrice:   AskPricePercent,
-								BidsAmount: BidAmountPercent,
-								BidsPrice:  BidsPricePercent}
+					AskPrice:   AskPricePercent,
+					BidsAmount: BidAmountPercent,
+					BidsPrice:  BidsPricePercent}
 			}
 		}
+		//fmt.Println(CurrentOrderBook)
 		//сортировка карты по ключам
 		var keys []string
 		for k := range CurrentOrderBook {
@@ -117,13 +126,16 @@ func main() {
 		}
 		sort.Strings(keys)
 		for _, k := range keys {
-			AskAmountS:= strconv.FormatFloat(CurrentOrderBook[k].AskAmount, 'f', 2, 64)//конвертация из float64 to string
-			AskPriceS:=strconv.FormatFloat(CurrentOrderBook[k].AskPrice, 'f', 2, 64)//конвертация из float64 to string
-			BidsAmountS:=strconv.FormatFloat(CurrentOrderBook[k].BidsAmount, 'f', 2, 64)//конвертация из float64 to string
-			BidsPriceS:=strconv.FormatFloat(CurrentOrderBook[k].BidsPrice, 'f', 2, 64)//конвертация из float64 to string
-			fmt.Println(k,"\t\t","dVA:", AskAmountS, "\t\t", "dPA",
-				AskPriceS, "\t\t", "dVB", BidsAmountS, "\t\t", "dVB", BidsPriceS)
+			AskAmountS := strconv.FormatFloat(CurrentOrderBook[k].AskAmount, 'f', 2, 64)   //конвертация из float64 to string
+			AskPriceS := strconv.FormatFloat(CurrentOrderBook[k].AskPrice, 'f', 2, 64)     //конвертация из float64 to string
+			BidsAmountS := strconv.FormatFloat(CurrentOrderBook[k].BidsAmount, 'f', 2, 64) //конвертация из float64 to string
+			BidsPriceS := strconv.FormatFloat(CurrentOrderBook[k].BidsPrice, 'f', 2, 64)   //конвертация из float64 to string
+			fmt.Println(k, "\t\t\t", "dVA:", AskAmountS, "\t\t\t", "dPA",
+				AskPriceS, "\t\t\t", "dVB", BidsAmountS, "\t\t\t", "dVB", BidsPriceS)
 		}
-		time.Sleep(1* time.Second) //Ждем секунду до следующего цикла
+		time.Sleep(1 * time.Second) //Ждем секунду до следующего цикла
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
 	}
 }
