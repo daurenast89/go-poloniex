@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 	"poloniex/polo"
 	"sort"
 	"strconv"
 	"time"
+	"math"
+	"os/exec"
+	"os"
 )
 
 const (
@@ -75,6 +76,8 @@ func main() {
 	}
 	//получаем текущие значения для сравнения
 	CurrentOrderBook := map[string]Start{}
+	minAskAmountPercent := 10.0 //минимальный процент изменеия объема
+	minAskPricePercent := 10.0  //минимальный процент изменеия цены
 	//каждую секунду получаем orderBook.
 	//Проходим  по всему orderBook, по каждой паре
 	//считаем общее кол-во объема, цены спроса и предложений, считаем среднюю цену
@@ -111,12 +114,16 @@ func main() {
 				AskPricePercent := (AskAvg/StartOrderBook[key].AskPrice - 1) * 100
 				BidAmountPercent := (BidsAmount/StartOrderBook[key].BidsAmount - 1) * 100
 				BidsPricePercent := (BidsAvg/StartOrderBook[key].BidsPrice - 1) * 100
+				if minAskAmountPercent <= math.Abs(AskAmountPercent) || minAskPricePercent <= math.Abs(AskPricePercent) ||
+				minAskAmountPercent <= math.Abs(BidAmountPercent) || minAskPricePercent <= math.Abs(BidsPricePercent){
 
-				CurrentOrderBook[key] = Start{AskAmount: AskAmountPercent,
-					AskPrice:   AskPricePercent,
-					BidsAmount: BidAmountPercent,
-					BidsPrice:  BidsPricePercent}
+					CurrentOrderBook[key] = Start{AskAmount: AskAmountPercent,
+						AskPrice:   AskPricePercent,
+						BidsAmount: BidAmountPercent,
+						BidsPrice:  BidsPricePercent}
+				}
 			}
+
 		}
 		//fmt.Println(CurrentOrderBook)
 		//сортировка карты по ключам
@@ -125,17 +132,17 @@ func main() {
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
+		c := exec.Command("clear")
+		c.Stdout = os.Stdout
+		c.Run()
 		for _, k := range keys {
 			AskAmountS := strconv.FormatFloat(CurrentOrderBook[k].AskAmount, 'f', 2, 64)   //конвертация из float64 to string
 			AskPriceS := strconv.FormatFloat(CurrentOrderBook[k].AskPrice, 'f', 2, 64)     //конвертация из float64 to string
 			BidsAmountS := strconv.FormatFloat(CurrentOrderBook[k].BidsAmount, 'f', 2, 64) //конвертация из float64 to string
 			BidsPriceS := strconv.FormatFloat(CurrentOrderBook[k].BidsPrice, 'f', 2, 64)   //конвертация из float64 to string
 			fmt.Println(k, "\t\t\t", "dVA:", AskAmountS, "\t\t\t", "dPA",
-				AskPriceS, "\t\t\t", "dVB", BidsAmountS, "\t\t\t", "dVB", BidsPriceS)
+				AskPriceS, "\t\t\t", "dVB", BidsAmountS, "\t\t\t", "dPB", BidsPriceS)
 		}
 		time.Sleep(1 * time.Second) //Ждем секунду до следующего цикла
-		cmd := exec.Command("clear")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
 	}
 }
